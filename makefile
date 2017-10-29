@@ -1,8 +1,8 @@
 proj5: proj5Main.o proj5Tokens.o proj5Stack.o
 	g++ -o proj5 proj5Main.o proj5Tokens.o proj5Stack.o
 
-proj5Main.o: proj5Stack.h proj5kdixle2.cpp proj5Tokens.h
-	g++ -c proj5kdixle2.cpp -o proj5Main.o
+proj5Main.o: proj5Stack.h kdixle2Proj5.cpp proj5Tokens.h
+	g++ -c kdixle2Proj5.cpp -o proj5Main.o
 
 proj5Tokens.o: proj5Tokens.cpp proj5Tokens.h
 	g++ -c proj5Tokens.cpp

@@ -3,7 +3,7 @@
  *
  * Date: 10/21/17
  *
- * Author: Pat Troy
+ * Authors: Pat Troy, Kyle Dixler
  *
  */
 

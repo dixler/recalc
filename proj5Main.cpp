@@ -204,9 +204,7 @@ void processExpression (Token inputToken, TokenReader *tr)
          tok->setToValue(-999);
          ValueStack->push(tok); 
          // handle input cleanup
-         while (inputToken.equalsType(EOLN) == false)
-            inputToken = tr->getNextToken ();
-         return;
+         goto INVALID;
       }
          /* get next token from input */
          inputToken = tr->getNextToken ();
@@ -215,9 +213,17 @@ void processExpression (Token inputToken, TokenReader *tr)
    /* The expression has reached its end */
    
    while(!OperatorStack->isEmpty()){   
+      if(OperatorStack->top().getOperator() == '('){
+         // unclosed braces
+         printf("Unclosed parenthesis ignoring\n");
+         goto INVALID;
+      }
       popAndEval (ValueStack, OperatorStack);
    }
-   printf("evaluated to: %d\n", ValueStack->top().getValue());
+   printf("Evaluated to: %d\n", ValueStack->top().getValue());
+INVALID:
+   while (inputToken.equalsType(EOLN) == false)
+      inputToken = tr->getNextToken ();
    OperatorStack->reset();
    ValueStack->reset();
 

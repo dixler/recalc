@@ -8,10 +8,6 @@
  *
  */
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cctype>
 #include "proj5Stack.h"
 
 // Class to hold the Token information

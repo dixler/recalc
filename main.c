@@ -7,52 +7,166 @@
  *
  */
 
-//#include "proj5Tokens.h"
 #define DEBUGMODE if(debugMode)
-#include "proj5Stack.h"
+#include "stack.h"
+#include "tokens.h"
 
-bool debugMode = false;
+int debugMode = 0;
 
-void printCommands();
+void printCommands() {
+   printf ("The commands for this program are:\n\n");
+   printf ("q - to quit the program\n");
+   printf ("? - to list the accepted commands\n");
+   printf ("or any infix mathematical expression using operators of (), *, /, +, -\n");
+   return;
+}
 
-int eval (Token val1, Token op, Token val2){
+
+int eval (Token *val1, Token *op, Token *val2){
    int result = -999;
-   switch(op.getOperator()){
+   switch(token_get_operator(op)){
       case '*':
          // multiply the arguments
-         result = (val1.getValue() * val2.getValue());
+         result = (token_get_value(val1) * token_get_value(val2));
          break;
       case '/':
-         result = (val1.getValue() / val2.getValue());
+         result = (token_get_value(val1) / token_get_value(val2));
          break;
       case '-':
-         result = (val1.getValue() - val2.getValue());
+         result = (token_get_value(val1) - token_get_value(val2));
          break;
       case '+':
-         result = (val1.getValue() + val2.getValue());
+         result = (token_get_value(val1) + token_get_value(val2));
          break;
       default:
-         fprintf(stderr, "passed illegal operator \'%c\'\n", op.getOperator());
+         fprintf(stderr, "passed illegal operator \'%c\'\n", token_get_operator(op));
    }
    return result;
 }
 
-void popAndEval(MyStack *ValueStack, MyStack *OperatorStack){
-   Token op = OperatorStack->top ();
-   OperatorStack->pop ();
-   Token v2 = ValueStack->top ();
-   ValueStack->pop ();
-   Token v1 = ValueStack->top ();
-   ValueStack->pop ();
-   Token *v3 = new Token(VALUE);
-   v3->setToValue(eval ( v1, op, v2 ));
-   //printf("evaluating: %d %c %d = %d\n",  v1.getValue(), op.getOperator(), v2.getValue(), v3->getValue());
+void stk_popAndEval(stack *ValueStack, stack *OperatorStack){
+   Token *op = stk_top(OperatorStack);
+   stk_pop(OperatorStack);
+   Token *v2 = stk_top(ValueStack);
+   stk_pop(ValueStack);
+   Token *v1 = stk_top(ValueStack);
+   stk_pop(ValueStack);
+   Token *v3 = token_create(VALUE);
+   token_set_to_value(v3, eval ( v1, op, v2 ));
+   //printf("evaluating: %d %c %d = %d\n",  v1.token_get_value(), op.token_get_operator(), v2.token_get_value(), v3->token_get_value());
 
 
-   ValueStack->push (v3);
+   stk_push(ValueStack, v3);
 }
 
-void processExpression (Token inputToken, TokenReader *tr);
+void processExpression (Token *inputToken, TokenReader *tr) {
+   /**********************************************/
+   /* Declare both stack head pointers here      */
+   stack *ValueStack = stk_create();
+   stack *OperatorStack = stk_create();
+
+   /* Loop until the expression reaches its End */
+   while (!token_equals_type(inputToken,EOLN))
+   {
+      /* The expression contain a VALUE */
+      if (token_equals_type(inputToken,VALUE))
+      {
+         /* make this a debugMode statement */
+         DEBUGMODE printf("Val: %d, ", token_get_value(inputToken) );
+
+         // add code to perform this operation here
+         Token *tok = token_create(VALUE);
+         token_set_to_value(tok, token_get_value(inputToken));
+
+         stk_push(ValueStack,tok);
+      }
+
+      /* The expression contains an OPERATOR */
+      else if (token_equals_type(inputToken,OPERATOR))
+      {
+         /* make this a debugMode statement */
+         DEBUGMODE printf ("OP: %c, ", token_get_operator(inputToken) );
+
+         // add code to perform this operation here
+         Token *optok = token_create(OPERATOR);
+         token_set_to_operator(optok, token_get_operator(inputToken));
+
+         if(token_get_operator(inputToken) == '('){     
+            // if ( the current operator is an Open Parenthesis ){
+            stk_push(OperatorStack,optok);            
+            // push the Open Parenthesis onto the OperatorStack 
+         }
+         else if(token_get_operator(inputToken) == '+' || token_get_operator(inputToken) == '-'){     
+            // if ( the current operator is + or - ){
+            while(!stk_is_empty(OperatorStack) && (
+                        token_get_operator(stk_top(OperatorStack)) == '+' || token_get_operator(stk_top(OperatorStack)) == '-'
+                     || token_get_operator(stk_top(OperatorStack)) == '*' || token_get_operator(stk_top(OperatorStack)) == '/')){
+
+               // while ( the OperatorStack is not Empty && the top of the OperatorStack is +, -, * or / ){
+                  stk_popAndEval(ValueStack, OperatorStack);   
+                  // popAndEval ( )
+               }
+               stk_push(OperatorStack,optok);              
+               // push the current operator on the OperatorStack
+            }
+         else if(token_get_operator(inputToken) == '*' || token_get_operator(inputToken) == '/'){   
+            // if ( the current operator is * or / )
+            while(!stk_is_empty(OperatorStack) && 
+                  (token_get_operator(stk_top(OperatorStack)) == '*' || token_get_operator(stk_top(OperatorStack)) == '/')){
+               // while ( the OperatorStack is not Empty && the top of the OperatorStack is * or / )
+               stk_popAndEval (ValueStack, OperatorStack);
+            }
+            stk_push(OperatorStack,optok);              
+            // push the current operator on the OperatorStack
+         }
+         else if(token_get_operator(inputToken) == ')'){     
+            // if ( the current operator is a Closing Parenthesis )
+            while(!stk_is_empty(OperatorStack) && token_get_operator(stk_top(OperatorStack)) != '('){  
+               // while ( the Operator Stack is not Empty && the top of the OperatorStack is not an Open Parenthesis ){
+               stk_popAndEval (ValueStack, OperatorStack);
+            }
+               if(stk_is_empty(OperatorStack)){   
+                  // if (the OperatorStack is Empty )
+                  fprintf(stderr, "error OperatorStack is empty\n"); 
+                  // print an error message
+               }
+               else{
+                  stk_pop(OperatorStack);  
+                  // pop the Open Parenthesis from the OperatorStack
+               }
+         }
+      }
+      else{
+         printf("Illegal operator\n");
+         Token *tok = token_create(VALUE);
+         token_set_to_value(tok,-999);
+         stk_push(ValueStack,tok); 
+         // handle input cleanup
+         goto INVALID;
+      }
+         /* get next token from input */
+         inputToken = TokenReader_get_next_token(tr);
+   }
+
+   /* The expression has reached its end */
+   
+   while(!stk_is_empty(OperatorStack)){   
+      if(token_get_operator(stk_top(OperatorStack)) == '('){
+         // unclosed braces
+         printf("Unclosed parenthesis ignoring\n");
+         goto INVALID;
+      }
+      stk_popAndEval (ValueStack, OperatorStack);
+   }
+   printf("Evaluated to: %d\n", token_get_value(stk_top(ValueStack)));
+INVALID:
+   while (!token_equals_type(inputToken,EOLN))
+      inputToken = TokenReader_get_next_token(tr);
+   stk_reset(OperatorStack);
+   stk_reset(ValueStack);
+
+   printf ("\n");
+}
 
 int main(int argc, char *argv[])
 {
@@ -64,7 +178,7 @@ int main(int argc, char *argv[])
          // argv[0] is pwd
          if(!strcmp("-d", argv[i])){
             // debug mode
-            debugMode = true;
+            debugMode = 1;
             printf (" Debugging Information \n"); 
          }
       }
@@ -72,161 +186,44 @@ int main(int argc, char *argv[])
 
 
 
-   Token inputToken;
-   TokenReader tr;
+   Token *inputToken;
+   TokenReader *tr = TokenReader_create();
 
    printf ("Starting Expression Evaluation Program\n\n");
    printf ("Enter Expression: ");
 
 
-   inputToken = tr.getNextToken ();
+   inputToken = TokenReader_get_next_token(tr);
 
-   while (inputToken.equalsType(QUIT) == false)
+   while (!token_equals_type(inputToken,QUIT))
    {
       /* check first Token on Line of input */
-      if(inputToken.equalsType(HELP))
+      if(token_equals_type(inputToken,HELP))
       {
          printCommands();
-         tr.clearToEoln();
+         TokenReader_clear_to_eoln(tr);
       }
-      else if(inputToken.equalsType(ERROR))
+      else if(token_equals_type(inputToken,ERROR))
       {
          printf ("Invalid Input - For a list of valid commands, type ?\n");
-         tr.clearToEoln();
+         TokenReader_clear_to_eoln(tr);
       }
-      else if(inputToken.equalsType(EOLN))
+      else if(token_equals_type(inputToken,EOLN))
       {
          printf ("Blank Line - Do Nothing\n");
          /* blank line - do nothing */
       }
       else
       {
-         processExpression(inputToken, &tr);
+         processExpression(inputToken, tr);
       }
 
       printf ("\nEnter Expression: ");
-      inputToken = tr.getNextToken ();
+      inputToken = TokenReader_get_next_token(tr);
    }
 
    printf ("Quitting Program\n");
    return 1;
 }
 
-void printCommands()
-{
-   printf ("The commands for this program are:\n\n");
-   printf ("q - to quit the program\n");
-   printf ("? - to list the accepted commands\n");
-   printf ("or any infix mathematical expression using operators of (), *, /, +, -\n");
-}
-
-void processExpression (Token inputToken, TokenReader *tr)
-{
-   /**********************************************/
-   /* Declare both stack head pointers here      */
-   MyStack *ValueStack = new MyStack();
-   MyStack *OperatorStack = new MyStack();
-
-   /* Loop until the expression reaches its End */
-   while (inputToken.equalsType(EOLN) == false)
-   {
-      /* The expression contain a VALUE */
-      if (inputToken.equalsType(VALUE))
-      {
-         /* make this a debugMode statement */
-         DEBUGMODE printf ("Val: %d, ", inputToken.getValue() );
-
-         // add code to perform this operation here
-         Token *tok = new Token(VALUE);
-         tok->setToValue(inputToken.getValue());
-
-         ValueStack->push(tok);
-      }
-
-      /* The expression contains an OPERATOR */
-      else if (inputToken.equalsType(OPERATOR))
-      {
-         /* make this a debugMode statement */
-         DEBUGMODE printf ("OP: %c, ", inputToken.getOperator() );
-
-         // add code to perform this operation here
-         Token *optok = new Token(OPERATOR);
-         optok->setToOperator(inputToken.getOperator());
-
-         if(inputToken.getOperator() == '('){     
-            // if ( the current operator is an Open Parenthesis ){
-            OperatorStack->push(optok);            
-            // push the Open Parenthesis onto the OperatorStack 
-         }
-         else if(inputToken.getOperator() == '+' || inputToken.getOperator() == '-'){     
-            // if ( the current operator is + or - ){
-            while(!OperatorStack->isEmpty() && (
-                        OperatorStack->top().getOperator() == '+' || OperatorStack->top().getOperator() == '-'
-                     || OperatorStack->top().getOperator() == '*' || OperatorStack->top().getOperator() == '/')){      
-
-               // while ( the OperatorStack is not Empty && the top of the OperatorStack is +, -, * or / ){
-                  popAndEval(ValueStack, OperatorStack);   
-                  // popAndEval ( )
-               }
-               OperatorStack->push(optok);              
-               // push the current operator on the OperatorStack
-            }
-         else if(inputToken.getOperator() == '*' || inputToken.getOperator() == '/'){   
-            // if ( the current operator is * or / )
-            while(!OperatorStack->isEmpty() && 
-                  (OperatorStack->top().getOperator() == '*' || OperatorStack->top().getOperator() == '/')){  
-               // while ( the OperatorStack is not Empty && the top of the OperatorStack is * or / )
-               popAndEval (ValueStack, OperatorStack);
-            }
-            OperatorStack->push(optok);              
-            // push the current operator on the OperatorStack
-         }
-         else if(inputToken.getOperator() == ')'){     
-            // if ( the current operator is a Closing Parenthesis )
-            while(!OperatorStack->isEmpty() && OperatorStack->top().getOperator() != '('){  
-               // while ( the Operator Stack is not Empty && the top of the OperatorStack is not an Open Parenthesis ){
-               popAndEval (ValueStack, OperatorStack);
-            }
-               if(OperatorStack->isEmpty()){   
-                  // if (the OperatorStack is Empty )
-                  fprintf(stderr, "error OperatorStack is empty\n"); 
-                  // print an error message
-               }
-               else{
-                  OperatorStack->pop();  
-                  // pop the Open Parenthesis from the OperatorStack
-               }
-         }
-      }
-      else{
-         printf("Illegal operator\n");
-         Token *tok = new Token(VALUE);
-         tok->setToValue(-999);
-         ValueStack->push(tok); 
-         // handle input cleanup
-         goto INVALID;
-      }
-         /* get next token from input */
-         inputToken = tr->getNextToken ();
-   }
-
-   /* The expression has reached its end */
-   
-   while(!OperatorStack->isEmpty()){   
-      if(OperatorStack->top().getOperator() == '('){
-         // unclosed braces
-         printf("Unclosed parenthesis ignoring\n");
-         goto INVALID;
-      }
-      popAndEval (ValueStack, OperatorStack);
-   }
-   printf("Evaluated to: %d\n", ValueStack->top().getValue());
-INVALID:
-   while (inputToken.equalsType(EOLN) == false)
-      inputToken = tr->getNextToken ();
-   OperatorStack->reset();
-   ValueStack->reset();
-
-   printf ("\n");
-}
 

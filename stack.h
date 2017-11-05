@@ -7,33 +7,27 @@
  *
  */
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cctype>
-#include <vector>
-#include "proj5Tokens.h"
+#include <stdio.h>
+#include <stdlib.h>
+//#include "tokens.h"
 
 // Class to hold the Token information
-class MyStack
-{
+typedef struct stack stack;
+/*
    private:
-      Token **stack;
-      int size;
-      int capacity;
+   Token **stack;
+   int size;
+   int capacity;
+   */
+extern stack *stk_create();
 
-   public:
+extern int stk_is_empty(stack *mystack);
 
-      MyStack();
+extern void stk_push(stack *mystack, void *data);
 
-      bool isEmpty();
+extern void *stk_top(stack *mystack);
 
-      void push(Token *data);
+extern void stk_pop(stack *mystack);
 
-      Token top();
+extern void stk_reset(stack *mystack);
 
-      void pop();
-
-      void reset();
-
-};

@@ -8,24 +8,34 @@
  *
  */
 
-#include "proj5Stack.h"
+#include "stack.h"
+//#include "tokens.h"
+
 
 // Class to hold the Token information
+typedef struct stack{
+   void **stack;
+   int size;
+   int capacity;
 
-MyStack::MyStack(){
+}stack;
+
+stack *stk_create(){
+   stack *this = (stack*)malloc(sizeof(stack));
    this->capacity = 2;
    this->size = 0;
-   this->stack = (Token**)malloc(sizeof(Token*)*2);
+   this->stack = (void**)malloc(sizeof(void*)*2);
+   return this;
 }
 
-bool MyStack::isEmpty(){
+int stk_is_empty(stack *this){
    return this->size == 0;
 }
 
-void MyStack::push(Token *data){
-   if(size == capacity){
-      this->capacity += 2;
-      this->stack = (Token**)realloc(this->stack, sizeof(Token*)*this->capacity);
+void stk_push(stack *this, void *data){
+   if(this->size == this->capacity){
+      this->capacity *= 2;
+      this->stack = (void**)realloc(this->stack, sizeof(void*)*this->capacity);
    }
    this->stack[this->size] = data;
    this->size += 1;
@@ -33,21 +43,22 @@ void MyStack::push(Token *data){
    return;
 }
 
-Token MyStack::top(){
+void *stk_top(stack *this){
    if(this->size == 0){
       fprintf(stderr, "stack empty\n");
-      return (TokenType)-999;
+      return NULL;
    }
-   return *this->stack[this->size-1];
+   return this->stack[this->size-1];
 }
 
-void MyStack::pop(){
+void stk_pop(stack *this){
    //this->stack->pop_back();
    this->size += -1;
    return;
 }
 
-void MyStack::reset(){
+void stk_reset(stack *this){
    this->size = 0;
+   return;
 }
 

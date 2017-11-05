@@ -17,186 +17,198 @@
 /**************************************************************/
 
 
-#include "proj5Tokens.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "tokens.h"
 
+#define isdigit(a) ((a) >= '0' && (a) <= '9')
+#define isspace(a) ((a) == ' ')
 
-  Token::Token()
-  {
-    type = ERROR;
-    op = '$';
-    val = -999;
-  }
+typedef struct Token Token;
 
-  // Initialize to a specific TokenType
-  Token::Token (TokenType t)
-  {
-    type = t;
-    op = '$';
-    val = -999;
-  }
+typedef struct Token{
+   TokenType type;
+   char op;
+   int val;
+}Token;
 
-  // Set to a specific TokenType
-  void Token::setToType(TokenType t)
-  {
-    type = t;
-    op = '$';
-    val = -999;
-  }
+typedef struct TokenReader{
+     char inputline[300];  // this assumes that all input lines are 300 characters or less in length
+     int needline;
+     int pos;
+}TokenReader;
 
-  // Set to a OPERATOR TokenType with specific operator value
-  void Token::setToOperator(char c)
-  {
-    type = OPERATOR;
-    op = c;
-    val = -999;
-  }
+// Initialize to a specific TokenType
+Token* token_create(TokenType t)
+{
+   Token *tok = (Token*)malloc(sizeof(Token));
+   tok->type = t;
+   tok->op = '$';
+   tok->val = -999;
+   return tok;
+}
 
-  // Set to a VALUE TokenType with a specific numeric value
-  void Token::setToValue(int v)
-  {
-    type = VALUE;
-    op = '$';
-    val = v;
-  }
+// Set to a specific TokenType
+void token_set_to_type(Token *tok, TokenType t)
+{
+   tok->type = t;
+   tok->op = '$';
+   tok->val = -999;
+}
 
-  // return true if the Current Token is of the given TokenType
-  bool Token::equalsType(TokenType t)
-  {
-    if (type == t)
-      return true;
-    else
-      return false;
-  }
+// Set to a OPERATOR TokenType with specific operator value
+void token_set_to_operator(Token *t, char c)
+{
+   t->type = OPERATOR;
+   t->op = c;
+   t->val = -999;
+}
 
-  // return true if the Current Token is of the OPERATOR TokenType
-  //     and contains the given operator character
-  bool Token::equalsOperator(char c)
-  {
-    if (type == OPERATOR && op == c)
-      return true;
-    else
-      return false;
-  }
+// Set to a VALUE TokenType with a specific numeric value
+void token_set_to_value(Token *t, int v)
+{
+   t->type = VALUE;
+   t->op = '$';
+   t->val = v;
+}
 
-  // Return the Operator for the current Token
-  //   verify the current Token is of the OPERATOR TokenType
-  char Token::getOperator ()
-  {
-    if (type == OPERATOR)
-      return op;
-    else
+// return true if the Current Token is of the given TokenType
+int token_equals_type(Token *tok, TokenType t)
+{
+   if(tok->type == t)
+      return 1;
+   else
+      return 0;
+}
+
+// return true if the Current Token is of the OPERATOR TokenType
+//     and contains the given operator character
+int token_equals_operator(Token *tok, char c)
+{
+   if(tok->type == OPERATOR && tok->op == c)
+      return 1;
+   else
+      return 0;
+}
+
+// Return the Operator for the current Token
+//   verify the current Token is of the OPERATOR TokenType
+char token_get_operator(Token *tok){
+   if(tok->type == OPERATOR)
+      return tok->op;
+   else
       return '$';   // using $ to indicate an error value
-  }
+}
 
-  // Return the Value for the current Token
-  //   verify the current token is of the value TokenType
-  int Token::getValue()
-  {
-    if (type == VALUE)
-      return val;
-    else
+// Return the Value for the current Token
+//   verify the current token is of the value TokenType
+int token_get_value(Token *tok)
+{
+   if(tok->type == VALUE)
+      return tok->val;
+   else
       return -999;  // using -999 to indicate an error value
-  }
+}
 
 
-  // initialize the TokenReader class to read from Standard Input
-  TokenReader::TokenReader()
-  {
-    // set to read from Standard Input
-    inputline[0] = '\0';
-    pos = 0;
-    needline = true;
-  }
+// initialize the TokenReader class to read from Standard Input
+TokenReader *TokenReader_create()
+{
+   // set to read from Standard Input
+   TokenReader *tr = (TokenReader*)malloc(sizeof(TokenReader));
+     tr->inputline[0] = '\0';  // this assumes that all input lines are 300 characters or less in length
+     tr->needline = 1;
+     tr->pos = 0;
+     return tr;
+}
 
-  // Force the next getNextToken to read in a line of input
-  void TokenReader::clearToEoln()
-  {
-    needline = true;
-  }
+// Force the next getNextToken to read in a line of input
+void TokenReader_clear_to_eoln(TokenReader *tr){
+   tr->needline = 1;
+}
 
-  // Return the next Token from the input line
-  Token TokenReader::getNextToken()
-  {
-    char* endCheck;
+// Return the next Token from the input line
+Token *TokenReader_get_next_token(TokenReader *tr) {
+   char* endCheck;
 
-    //printf ("getToken %d, %d, %s\n", pos, needline, inputline);
+   //printf ("getToken %d, %d, %s\n", pos, needline, inputline);
 
-    // get a new line of input from user
-    if (needline)
-    {
-      endCheck = fgets ( inputline, 300, stdin);
+   // get a new line of input from user
+   if(tr->needline)
+   {
+      endCheck = fgets( tr->inputline, 300, stdin);
 
-      if (endCheck == NULL )
+      if(endCheck == NULL )
       {
-        printf ("Error in reading");
-        Token t(EOFILE);
-        return t;
+         printf("Error in reading");
+         Token *t = token_create(EOFILE);
+         return t;
       }
 
-      for (int i = 0 ; i < strlen(inputline) ; i++)
-          if ('\n' == inputline[i])
-              inputline[i] = ' ';
-      strcat (inputline , " ");    // add a space at end to help deal with digit calculation
-      needline = false;
-      pos = 0;
-    }
+      for(int i = 0 ; i < strlen(tr->inputline) ; i++)
+         if('\n' == tr->inputline[i])
+            tr->inputline[i] = ' ';
+      strcat(tr->inputline , " ");    // add a space at end to help deal with digit calculation
+      tr->needline = 0;
+      tr->pos = 0;
+   }
 
-    // skip over any white space characters in the beginning of the input
-    while ( pos < strlen(inputline) && isspace(inputline[pos]) )
-    {
-      pos++;
-    }
+   // skip over any white space characters in the beginning of the input
+   while( tr->pos < strlen(tr->inputline) && isspace(tr->inputline[tr->pos]) )
+   {
+      tr->pos++;
+   }
 
-    // check for the end of the current line of input
-    if (pos >= strlen(inputline))
-    { // at end of line
-      needline = true;
-      Token t(EOLN);
+   // check for the end of the current line of input
+   if(tr->pos >= strlen(tr->inputline))
+   { // at end of line
+      tr->needline = 1;
+      Token *t = token_create(EOLN);
       return t;
-    }
+   }
 
-    // Get the next character from the input line
-    char ch = inputline[pos]; pos++;
+   // Get the next character from the input line
+   char ch = tr->inputline[tr->pos]; tr->pos++;
 
-    // check if 'q' or 'Q' was entered ==> QUIT Token
-    if ( 'q' == ch || 'Q' == ch )
-    {
-      return Token (QUIT);
-    }
+   // check if 'q' or 'Q' was entered ==> QUIT Token
+   if( 'q' == ch || 'Q' == ch )
+   {
+      return token_create(QUIT);
+   }
 
-    // check if "?" was entered ==> HELP Token
-    if ( '?' == ch )
-    {
-      return Token (HELP);
-    }
+   // check if "?" was entered ==> HELP Token
+   if( '?' == ch )
+   {
+      return token_create(HELP);
+   }
 
-    // check for Operator values of: + - * / ( )  ==> OPERATOR Token
-    if ( ('+' == ch) || ('-' == ch) || ('*' == ch) ||
-      ('/' == ch) || ('(' == ch) || (')' == ch) )
-    {
-      Token t;
-      t.setToOperator( ch );
+   // check for Operator values of: + - * / ( )  ==> OPERATOR Token
+   if(('+' == ch) || ('-' == ch) || ('*' == ch) ||
+         ('/' == ch) || ('(' == ch) || (')' == ch) )
+   {
+      Token *t = token_create(ERROR);
+      token_set_to_operator( t, ch );
       return t;
-    }
+   }
 
-    // check for a number  ==> VALUE Token
-    if (isdigit(ch))
-    {
-      int number = int (ch) - int('0');  // subtract ascii value of ch from ascii value of '0'
-      ch = inputline[pos]; pos++;
-      while (isdigit(ch))
-      {
-        number = number * 10 + int (ch) - int('0');
-        ch = inputline[pos]; pos++;
+   // check for a number  ==> VALUE Token
+   if(isdigit(ch)){
+      int number = ch - '0';  // subtract ascii value of ch from ascii value of '0'
+
+      ch = tr->inputline[tr->pos]; tr->pos++;
+      while(isdigit(ch)){
+         number = number * 10 + ch - '0';
+         ch = tr->inputline[tr->pos]; tr->pos++;
       }
-      pos--; // since number calcuation check one character after the last digit
-      Token t;
-      t.setToValue( number );
+      tr->pos--; // since number calcuation check one character after the last digit
+      Token *t = token_create(ERROR);
+      token_set_to_value( t, number );
       return t;
-    }
+   }
 
-    // Input in not valid if code get to this part ==> ERROR Token
-    return Token (ERROR);
-  }
+   // Input in not valid if code get to this part ==> ERROR Token
+   return token_create(ERROR);
+}
 
 

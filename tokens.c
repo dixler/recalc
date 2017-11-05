@@ -49,6 +49,12 @@ Token* token_create(TokenType t)
    return tok;
 }
 
+void token_free(Token *t)
+{
+   free(t);
+   return;
+}
+
 // Set to a specific TokenType
 void token_set_to_type(Token *tok, TokenType t)
 {

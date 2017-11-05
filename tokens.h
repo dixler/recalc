@@ -39,6 +39,9 @@ typedef struct Token Token;
 // Default to initialize to the ERROR TokenType
 extern Token *token_create();
 
+// free memory associated with token
+extern void token_free(Token *t);
+
 // Initialize to a specific TokenType
 extern Token *token_create(TokenType t);
 

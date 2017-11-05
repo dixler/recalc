@@ -19,7 +19,9 @@ typedef struct stack stack;
    int size;
    int capacity;
    */
-extern stack *stk_create();
+extern stack *stk_create(void *free_func);
+
+extern void stk_free(stack *mystack);
 
 extern int stk_is_empty(stack *mystack);
 

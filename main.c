@@ -62,8 +62,8 @@ void stk_popAndEval(stack *ValueStack, stack *OperatorStack){
 void processExpression (Token *inputToken, TokenReader *tr) {
    /**********************************************/
    /* Declare both stack head pointers here      */
-   stack *ValueStack = stk_create();
-   stack *OperatorStack = stk_create();
+   stack *ValueStack = stk_create(token_free);
+   stack *OperatorStack = stk_create(token_free);
 
    /* Loop until the expression reaches its End */
    while (!token_equals_type(inputToken,EOLN))

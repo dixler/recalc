@@ -15,17 +15,28 @@
 // Class to hold the Token information
 typedef struct stack{
    void **stack;
+   void *free_func;
    int size;
    int capacity;
 
 }stack;
 
-stack *stk_create(){
+stack *stk_create(void *free_func){
    stack *this = (stack*)malloc(sizeof(stack));
+   this->free_func = free_func;
    this->capacity = 2;
    this->size = 0;
    this->stack = (void**)malloc(sizeof(void*)*2);
    return this;
+}
+
+void stk_free(stack *this){
+   void (*free_func)(void*) = (void *)(this->free_func);
+   for(int i = 0; i < this->capacity; i++){
+      free_func(this->stack[i]);
+   }
+   free(this);
+   return;
 }
 
 int stk_is_empty(stack *this){

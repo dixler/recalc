@@ -8,9 +8,21 @@
  */
 
 #define DEBUGMODE if(debugMode)
+#include <ncurses.h>
 #include <math.h>
 #include "stack.h"
 #include "tokens.h"
+#include "cursor.h"
+
+
+#define UP 65
+#define DOWN 66
+#define BACKSPACE 127
+#define ENTER 10
+#define DELETE 126
+#define SPACE 32
+#define HOME 72
+#define END 70
 
 int debugMode = 0;
 
@@ -185,62 +197,57 @@ INVALID:
    printf ("\n");
 }
 
-int main(int argc, char *argv[])
-{
-   /***************************************************************/
-   /* Add code for checking command line arguments for debug mode */
-      /* verify the proper number of command line arguments were given */
-   if(argc > 1) {
-      for(int i = 1; i< argc; i++){
-         // argv[0] is pwd
-         if(!strcmp("-d", argv[i])){
-            // debug mode
-            debugMode = 1;
-            printf (" Debugging Information \n"); 
-         }
+int main(int argc, char *argv[]) {
+
+   int cur_char = '\0';
+   int row,col;
+   cursor *Cursor = cursor_create();
+   initscr();
+   noecho();
+   getmaxyx(stdscr,row,col);
+   for(int num_char = 0;; num_char++){
+      keypad(stdscr, TRUE);
+      cur_char = getch();
+      switch(cur_char){
+         //case(KEY_BACKSPACE):
+         case(BACKSPACE):
+            cursor_backspace(Cursor);
+            break;
+         case(ENTER):
+            break;
+         case(DELETE):
+            break;
+         case(KEY_HOME):
+            cursor_home(Cursor);
+            break;
+         case(KEY_END):
+            cursor_end(Cursor);
+            break;
+         case(KEY_LEFT):
+            cursor_prev(Cursor);
+            break;
+         case(KEY_RIGHT):
+            cursor_next(Cursor);
+            break;
+
+         case(KEY_UP):
+         case(KEY_DOWN):
+            break;
+
+         default:
+            cursor_insert(Cursor, cur_char);
+            break;
       }
+      char *string = cursor_get_string(Cursor);
+
+      clear();
+      mvprintw(0,0, "%s", string);
+      move(0,cursor_get_x(Cursor));
+      free(string);
    }
+   endwin();
 
-
-
-   Token *inputToken;
-   TokenReader *tr = TokenReader_create();
-
-   printf ("Starting Expression Evaluation Program\n\n");
-   printf ("Enter Expression: ");
-
-
-   inputToken = TokenReader_get_next_token(tr);
-
-   while (!token_equals_type(inputToken,QUIT))
-   {
-      /* check first Token on Line of input */
-      if(token_equals_type(inputToken,HELP))
-      {
-         printCommands();
-         TokenReader_clear_to_eoln(tr);
-      }
-      else if(token_equals_type(inputToken,ERROR))
-      {
-         printf ("Invalid Input - For a list of valid commands, type ?\n");
-         TokenReader_clear_to_eoln(tr);
-      }
-      else if(token_equals_type(inputToken,EOLN))
-      {
-         printf ("Blank Line - Do Nothing\n");
-         /* blank line - do nothing */
-      }
-      else
-      {
-         processExpression(inputToken, tr);
-      }
-
-      printf ("\nEnter Expression: ");
-      inputToken = TokenReader_get_next_token(tr);
-   }
-
-   printf ("Quitting Program\n");
-   return 1;
+   return 0;
 }
 
 

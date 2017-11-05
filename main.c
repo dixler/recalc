@@ -8,6 +8,7 @@
  */
 
 #define DEBUGMODE if(debugMode)
+#include <math.h>
 #include "stack.h"
 #include "tokens.h"
 
@@ -25,6 +26,10 @@ void printCommands() {
 int eval (Token *val1, Token *op, Token *val2){
    int result = -999;
    switch(token_get_operator(op)){
+      case '^':
+         // exponent the arguments
+         result = (int)pow((double)token_get_value(val1),(double)token_get_value(val2));
+         break;
       case '*':
          // multiply the arguments
          result = (token_get_value(val1) * token_get_value(val2));
@@ -100,19 +105,31 @@ void processExpression (Token *inputToken, TokenReader *tr) {
             // if ( the current operator is + or - ){
             while(!stk_is_empty(OperatorStack) && (
                         token_get_operator(stk_top(OperatorStack)) == '+' || token_get_operator(stk_top(OperatorStack)) == '-'
-                     || token_get_operator(stk_top(OperatorStack)) == '*' || token_get_operator(stk_top(OperatorStack)) == '/')){
+                     || token_get_operator(stk_top(OperatorStack)) == '*' || token_get_operator(stk_top(OperatorStack)) == '/'
+                     || token_get_operator(stk_top(OperatorStack)) == '^')){
 
                // while ( the OperatorStack is not Empty && the top of the OperatorStack is +, -, * or / ){
                   stk_popAndEval(ValueStack, OperatorStack);   
                   // popAndEval ( )
-               }
-               stk_push(OperatorStack,optok);              
-               // push the current operator on the OperatorStack
             }
+            stk_push(OperatorStack,optok);              
+            // push the current operator on the OperatorStack
+         }
          else if(token_get_operator(inputToken) == '*' || token_get_operator(inputToken) == '/'){   
             // if ( the current operator is * or / )
             while(!stk_is_empty(OperatorStack) && 
-                  (token_get_operator(stk_top(OperatorStack)) == '*' || token_get_operator(stk_top(OperatorStack)) == '/')){
+                  (token_get_operator(stk_top(OperatorStack)) == '*' || token_get_operator(stk_top(OperatorStack)) == '/'
+                     || token_get_operator(stk_top(OperatorStack)) == '^')){
+               // while ( the OperatorStack is not Empty && the top of the OperatorStack is * or / )
+               stk_popAndEval (ValueStack, OperatorStack);
+            }
+            stk_push(OperatorStack,optok);              
+            // push the current operator on the OperatorStack
+         }
+         else if(token_get_operator(inputToken) == '^'){   
+            // if ( the current operator is ^ )
+            while(!stk_is_empty(OperatorStack) && 
+                  (token_get_operator(stk_top(OperatorStack)) == '^')){
                // while ( the OperatorStack is not Empty && the top of the OperatorStack is * or / )
                stk_popAndEval (ValueStack, OperatorStack);
             }

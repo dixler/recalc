@@ -189,9 +189,9 @@ Token *TokenReader_get_next_token(TokenReader *tr) {
       return token_create(HELP);
    }
 
-   // check for Operator values of: + - * / ( )  ==> OPERATOR Token
-   if(('+' == ch) || ('-' == ch) || ('*' == ch) ||
-         ('/' == ch) || ('(' == ch) || (')' == ch) )
+   // check for Operator values of: + - * / ^ ( )  ==> OPERATOR Token
+   if(   ('+' == ch) || ('-' == ch) || ('*' == ch) || ('^' == ch) 
+      || ('/' == ch) || ('(' == ch) || (')' == ch) )
    {
       Token *t = token_create(ERROR);
       token_set_to_operator( t, ch );

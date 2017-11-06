@@ -37,6 +37,10 @@ void printCommands() {
 
 int eval (Token *val1, Token *op, Token *val2){
    int result = -999;
+   if(val1 == NULL || op == NULL || val2 == NULL){
+      return result;
+   }
+
    switch(token_get_operator(op)){
       case '^':
          // exponent the arguments
@@ -76,12 +80,12 @@ void stk_popAndEval(stack *ValueStack, stack *OperatorStack){
    stk_push(ValueStack, v3);
 }
 
-int processExpression (Token *inputToken, TokenReader *tr) {
+int *processExpression (Token *inputToken, TokenReader *tr) {
    /**********************************************/
    /* Declare both stack head pointers here      */
    stack *ValueStack = stk_create(token_free);
    stack *OperatorStack = stk_create(token_free);
-   int solution = -999;
+   int *solution = NULL;
 
    /* Loop until the expression reaches its End */
    while (!token_equals_type(inputToken,EOLN))
@@ -188,7 +192,10 @@ int processExpression (Token *inputToken, TokenReader *tr) {
       }
       stk_popAndEval (ValueStack, OperatorStack);
    }
-   solution = token_get_value(stk_top(ValueStack));
+   if(stk_top(ValueStack) != NULL){
+      solution = (int*)malloc(sizeof(int));
+      *solution = token_get_value(stk_top(ValueStack));
+   }
    //printf("Evaluated to: %d\n", solution);
 INVALID:
    while (!token_equals_type(inputToken,EOLN))
@@ -212,7 +219,7 @@ int main(int argc, char *argv[]) {
    noecho();
    getmaxyx(stdscr,row,col);
    char *string;
-   int solution = 0;
+   int *solution = NULL;
    for(int num_char = 0;; num_char++){
       keypad(stdscr, TRUE);
       cur_char = getch();
@@ -222,13 +229,6 @@ int main(int argc, char *argv[]) {
             cursor_backspace(Cursor);
             break;
          case(ENTER):
-            cursor_end(Cursor);
-            cursor_insert(Cursor,cur_char);
-            TokenReader_set_line(tr, cursor_get_string(Cursor));
-            inputToken = TokenReader_get_next_token(tr);
-            solution = processExpression(inputToken, tr);
-            cursor_backspace(Cursor);
-            //cursor_clear(Cursor);
             break;
          case(KEY_DC):
             cursor_delete(Cursor);
@@ -257,9 +257,14 @@ int main(int argc, char *argv[]) {
       //char *rev_string = cursor_get_rev_string(Cursor);
 
       string = cursor_get_string(Cursor);
+      TokenReader_set_line(tr, string);
+      inputToken = TokenReader_get_next_token(tr);
+      solution = processExpression(inputToken, tr);
       clear();
       mvprintw(0,0, "%s", string);
-      mvprintw(1,0, "%d", solution);
+      if(solution != NULL){
+         mvprintw(1,0, "%d", *solution);
+      }
       //mvprintw(2,0, "%s", rev_string);
       move(cursor_get_x(Cursor)/col,cursor_get_x(Cursor)%col);
       free(string);

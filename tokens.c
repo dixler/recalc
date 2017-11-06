@@ -35,7 +35,6 @@ typedef struct Token{
 
 typedef struct TokenReader{
      char *inputline;  // this assumes that all input lines are 300 characters or less in length
-     int needline;
      int pos;
 }TokenReader;
 
@@ -61,6 +60,11 @@ void token_set_to_type(Token *tok, TokenType t)
    tok->type = t;
    tok->op = '$';
    tok->val = -999;
+}
+
+int token_get_type(Token *tok)
+{
+   return tok->type;
 }
 
 // Set to a OPERATOR TokenType with specific operator value
@@ -103,8 +107,9 @@ int token_equals_operator(Token *tok, char c)
 char token_get_operator(Token *tok){
    if(tok->type == OPERATOR)
       return tok->op;
-   else
+   else{
       return '$';   // using $ to indicate an error value
+   }
 }
 
 // Return the Value for the current Token
@@ -124,9 +129,14 @@ TokenReader *TokenReader_create(char *line)
    // set to read from Standard Input
    TokenReader *tr = (TokenReader*)malloc(sizeof(TokenReader));
      tr->inputline = line;  // this assumes that all input lines are 300 characters or less in length
-     tr->needline = 0;
      tr->pos = 0;
      return tr;
+}
+
+// Force the next getNextToken to read in a line of input
+void TokenReader_set_line(TokenReader *tr, char *line){
+   tr->inputline = line;
+   tr->pos = 0;
 }
 
 // Return the next Token from the input line
@@ -143,13 +153,13 @@ Token *TokenReader_get_next_token(TokenReader *tr) {
    // check for the end of the current line of input
    if(tr->pos >= (signed)strlen(tr->inputline))
    { // at end of line
-      tr->needline = 1;
       Token *t = token_create(EOLN);
       return t;
    }
 
    // Get the next character from the input line
    char ch = tr->inputline[tr->pos]; tr->pos++;
+   //printf("curChar: %c\n", ch);
 
    // check if 'q' or 'Q' was entered ==> QUIT Token
    if( 'q' == ch || 'Q' == ch )
@@ -158,22 +168,22 @@ Token *TokenReader_get_next_token(TokenReader *tr) {
    }
 
    // check if "?" was entered ==> HELP Token
-   if( '?' == ch )
+   else if( '?' == ch )
    {
       return token_create(HELP);
    }
 
    // check for Operator values of: + - * / ^ ( )  ==> OPERATOR Token
-   if(   ('+' == ch) || ('-' == ch) || ('*' == ch) || ('^' == ch) 
+   else if(   ('+' == ch) || ('-' == ch) || ('*' == ch) || ('^' == ch) 
       || ('/' == ch) || ('(' == ch) || (')' == ch) )
    {
-      Token *t = token_create(ERROR);
+      Token *t = token_create(OPERATOR);
       token_set_to_operator( t, ch );
       return t;
    }
 
    // check for a number  ==> VALUE Token
-   if(isdigit(ch)){
+   else if(isdigit(ch)){
       int number = ch - '0';  // subtract ascii value of ch from ascii value of '0'
 
       ch = tr->inputline[tr->pos]; tr->pos++;
@@ -182,7 +192,7 @@ Token *TokenReader_get_next_token(TokenReader *tr) {
          ch = tr->inputline[tr->pos]; tr->pos++;
       }
       tr->pos--; // since number calcuation check one character after the last digit
-      Token *t = token_create(ERROR);
+      Token *t = token_create(VALUE);
       token_set_to_value( t, number );
       return t;
    }

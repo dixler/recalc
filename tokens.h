@@ -57,6 +57,8 @@ extern void token_set_to_value(Token *tok, int v);
 // return true if the Current Token is of the given TokenType
 extern int token_equals_type(Token *tok, TokenType t);
 
+extern int token_get_type(Token *tok);
+
 // return true if the Current Token is of the OPERATOR TokenType
 //     and contains the given operator character
 extern int token_equals_operator(Token *tok, char c);
@@ -82,6 +84,9 @@ typedef struct TokenReader TokenReader;
 */
 // initialize the TokenReader class to read from Standard Input
 extern TokenReader *TokenReader_create(char *line);
+
+// Force the next getNextToken to read in a line of input
+extern void TokenReader_set_line(TokenReader *tr, char *line);
 
 // Return the next Token from the input line
 extern Token *TokenReader_get_next_token(TokenReader *tr);

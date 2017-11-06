@@ -81,6 +81,7 @@ int processExpression (Token *inputToken, TokenReader *tr) {
    /* Declare both stack head pointers here      */
    stack *ValueStack = stk_create(token_free);
    stack *OperatorStack = stk_create(token_free);
+   int solution = -999;
 
    /* Loop until the expression reaches its End */
    while (!token_equals_type(inputToken,EOLN))
@@ -164,14 +165,14 @@ int processExpression (Token *inputToken, TokenReader *tr) {
                   // pop the Open Parenthesis from the OperatorStack
                }
          }
-      }
-      else{
-         printf("Illegal operator\n");
-         Token *tok = token_create(VALUE);
-         token_set_to_value(tok,-999);
-         stk_push(ValueStack,tok); 
-         // handle input cleanup
-         goto INVALID;
+         else{
+            printf("Illegal operator\n");
+            Token *tok = token_create(VALUE);
+            token_set_to_value(tok,-999);
+            stk_push(ValueStack,tok); 
+            // handle input cleanup
+            goto INVALID;
+         }
       }
          /* get next token from input */
          inputToken = TokenReader_get_next_token(tr);
@@ -187,7 +188,7 @@ int processExpression (Token *inputToken, TokenReader *tr) {
       }
       stk_popAndEval (ValueStack, OperatorStack);
    }
-   int solution = token_get_value(stk_top(ValueStack));
+   solution = token_get_value(stk_top(ValueStack));
    //printf("Evaluated to: %d\n", solution);
 INVALID:
    while (!token_equals_type(inputToken,EOLN))
@@ -205,7 +206,7 @@ int main(int argc, char *argv[]) {
    int cur_char = '\0';
    int row,col;
    cursor *Cursor = cursor_create();
-   TokenReader *tr;
+   TokenReader *tr = TokenReader_create(NULL);
    Token *inputToken;
    initscr();
    noecho();
@@ -221,12 +222,13 @@ int main(int argc, char *argv[]) {
             cursor_backspace(Cursor);
             break;
          case(ENTER):
-            tr = TokenReader_create(string);
+            cursor_end(Cursor);
+            cursor_insert(Cursor,cur_char);
+            TokenReader_set_line(tr, cursor_get_string(Cursor));
             inputToken = TokenReader_get_next_token(tr);
             solution = processExpression(inputToken, tr);
-            cursor_clear(Cursor);
-            free(tr);
-            free(inputToken);
+            cursor_backspace(Cursor);
+            //cursor_clear(Cursor);
             break;
          case(KEY_DC):
             cursor_delete(Cursor);
@@ -257,7 +259,7 @@ int main(int argc, char *argv[]) {
       string = cursor_get_string(Cursor);
       clear();
       mvprintw(0,0, "%s", string);
-      mvprintw(1,0, "%i", solution);
+      mvprintw(1,0, "%d", solution);
       //mvprintw(2,0, "%s", rev_string);
       move(cursor_get_x(Cursor)/col,cursor_get_x(Cursor)%col);
       free(string);

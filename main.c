@@ -76,7 +76,7 @@ void stk_popAndEval(stack *ValueStack, stack *OperatorStack){
    stk_push(ValueStack, v3);
 }
 
-void processExpression (Token *inputToken, TokenReader *tr) {
+int processExpression (Token *inputToken, TokenReader *tr) {
    /**********************************************/
    /* Declare both stack head pointers here      */
    stack *ValueStack = stk_create(token_free);
@@ -187,24 +187,31 @@ void processExpression (Token *inputToken, TokenReader *tr) {
       }
       stk_popAndEval (ValueStack, OperatorStack);
    }
-   printf("Evaluated to: %d\n", token_get_value(stk_top(ValueStack)));
+   int solution = token_get_value(stk_top(ValueStack));
+   //printf("Evaluated to: %d\n", solution);
 INVALID:
    while (!token_equals_type(inputToken,EOLN))
       inputToken = TokenReader_get_next_token(tr);
    stk_reset(OperatorStack);
    stk_reset(ValueStack);
 
-   printf ("\n");
+   //printf ("\n");
+   return solution;
 }
+
 
 int main(int argc, char *argv[]) {
 
    int cur_char = '\0';
    int row,col;
    cursor *Cursor = cursor_create();
+   TokenReader *tr;
+   Token *inputToken;
    initscr();
    noecho();
    getmaxyx(stdscr,row,col);
+   char *string;
+   int solution = 0;
    for(int num_char = 0;; num_char++){
       keypad(stdscr, TRUE);
       cur_char = getch();
@@ -214,8 +221,15 @@ int main(int argc, char *argv[]) {
             cursor_backspace(Cursor);
             break;
          case(ENTER):
+            tr = TokenReader_create(string);
+            inputToken = TokenReader_get_next_token(tr);
+            solution = processExpression(inputToken, tr);
+            cursor_clear(Cursor);
+            free(tr);
+            free(inputToken);
             break;
-         case(DELETE):
+         case(KEY_DC):
+            cursor_delete(Cursor);
             break;
          case(KEY_HOME):
             cursor_home(Cursor);
@@ -238,12 +252,17 @@ int main(int argc, char *argv[]) {
             cursor_insert(Cursor, cur_char);
             break;
       }
-      char *string = cursor_get_string(Cursor);
+      //char *rev_string = cursor_get_rev_string(Cursor);
 
+      string = cursor_get_string(Cursor);
       clear();
       mvprintw(0,0, "%s", string);
-      move(0,cursor_get_x(Cursor));
+      mvprintw(1,0, "%i", solution);
+      //mvprintw(2,0, "%s", rev_string);
+      move(cursor_get_x(Cursor)/col,cursor_get_x(Cursor)%col);
       free(string);
+      solution = 0;
+      //free(rev_string);
    }
    endwin();
 

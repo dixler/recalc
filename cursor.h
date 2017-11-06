@@ -25,3 +25,6 @@ extern void cursor_insert(cursor *cur, char val);
 extern int cursor_get_x(cursor *cur);
 
 extern char *cursor_get_string(cursor *cur);
+
+//extern char *cursor_get_rev_string(cursor *cur);
+

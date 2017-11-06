@@ -34,7 +34,7 @@ typedef struct Token{
 }Token;
 
 typedef struct TokenReader{
-     char inputline[300];  // this assumes that all input lines are 300 characters or less in length
+     char *inputline;  // this assumes that all input lines are 300 characters or less in length
      int needline;
      int pos;
 }TokenReader;
@@ -119,55 +119,29 @@ int token_get_value(Token *tok)
 
 
 // initialize the TokenReader class to read from Standard Input
-TokenReader *TokenReader_create()
+TokenReader *TokenReader_create(char *line)
 {
    // set to read from Standard Input
    TokenReader *tr = (TokenReader*)malloc(sizeof(TokenReader));
-     tr->inputline[0] = '\0';  // this assumes that all input lines are 300 characters or less in length
-     tr->needline = 1;
+     tr->inputline = line;  // this assumes that all input lines are 300 characters or less in length
+     tr->needline = 0;
      tr->pos = 0;
      return tr;
 }
 
-// Force the next getNextToken to read in a line of input
-void TokenReader_clear_to_eoln(TokenReader *tr){
-   tr->needline = 1;
-}
-
 // Return the next Token from the input line
 Token *TokenReader_get_next_token(TokenReader *tr) {
-   char* endCheck;
 
    //printf ("getToken %d, %d, %s\n", pos, needline, inputline);
 
-   // get a new line of input from user
-   if(tr->needline)
-   {
-      endCheck = fgets( tr->inputline, 300, stdin);
-
-      if(endCheck == NULL )
-      {
-         printf("Error in reading");
-         Token *t = token_create(EOFILE);
-         return t;
-      }
-
-      for(int i = 0 ; i < strlen(tr->inputline) ; i++)
-         if('\n' == tr->inputline[i])
-            tr->inputline[i] = ' ';
-      strcat(tr->inputline , " ");    // add a space at end to help deal with digit calculation
-      tr->needline = 0;
-      tr->pos = 0;
-   }
-
    // skip over any white space characters in the beginning of the input
-   while( tr->pos < strlen(tr->inputline) && isspace(tr->inputline[tr->pos]) )
+   while( tr->pos < (signed)strlen(tr->inputline) && isspace(tr->inputline[tr->pos]) )
    {
       tr->pos++;
    }
 
    // check for the end of the current line of input
-   if(tr->pos >= strlen(tr->inputline))
+   if(tr->pos >= (signed)strlen(tr->inputline))
    { // at end of line
       tr->needline = 1;
       Token *t = token_create(EOLN);

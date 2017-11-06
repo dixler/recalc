@@ -32,11 +32,16 @@ cursor *cursor_create(){
 // TODO
 void cursor_clear(cursor *this){
    node *freed = this->home;
-   while(freed != NULL){
+   while(freed != this->end){
       node *temp = freed;
       freed = freed->next;
       free(temp);
    }
+   this->home = this->cur = this->end;
+   this->cur->prev = NULL;
+   this->cur->next = NULL;
+   this->len = 0;
+   this->pos = 0;
    return;
 }
 
@@ -79,11 +84,46 @@ void cursor_prev(cursor *this){
 // delete the current cursor node and
 // set the next node as the cursor
 void cursor_delete(cursor *this){
-   if(this->cur != this->home){
-      // if the cursor is not on the home 
-      // cursor, there is something to delete
-      
-      // we need to delete the previous letter
+   // if the cursor is not on the end 
+   if(this->cur != this->end){ /*&& this->cur->next != this->end){*/
+      // there is a node after cur
+      if(this->cur == this->end->prev){
+         // deleting last character
+         // TODO probably has some glitches
+         node *freed = this->cur;
+
+         // TODO DEREFERENCING something that could be NULL
+         if(freed != this->home){
+            // not freeing first node
+            this->end->prev = freed->prev;
+            freed->prev->next = this->end;
+         }
+         else{
+            // freeing first node
+            this->end->prev = freed->prev;
+            this->home = this->end;
+         }
+
+         free(freed);
+         this->cur = this->end;
+      }
+      else{
+         // otherwise, we're in the middle of the list
+         // and have a lot of bookkeeping to do
+         node *freed = this->cur;
+         this->cur = this->cur->next;
+         if(freed->prev == NULL){
+            // deleting the first node in the list
+            this->home = this->cur;
+            this->home->prev = NULL;
+         }
+         else{
+            this->cur->prev = freed->prev;
+            freed->prev->next = this->cur;
+         }
+         free(freed);
+      }
+      this->len -= 1;
    }
    return;
 }
@@ -156,12 +196,27 @@ int cursor_get_x(cursor *this){
    return this->pos;
 }
 
+
+
 char *cursor_get_string(cursor *this){
    node *cur_node = this->home;
-   char *string = (char*)malloc(sizeof(char)*this->len);
+   char *string = (char*)malloc(sizeof(char)*(this->len+1));
+   string[0] = '\0';
    for(int index = 0; index < this->len+1; index++){
       string[index] = cur_node->data;
       cur_node = cur_node->next;
    }
    return string;
 }
+
+/*
+char *cursor_get_rev_string(cursor *this){
+   node *cur_node = this->end;
+   char *string = (char*)malloc(sizeof(char)*this->len+1);
+   for(int index = 0; index < this->len+1; index++){
+      string[index-1] = cur_node->data;
+      cur_node = cur_node->prev;
+   }
+   return string;
+}
+*/

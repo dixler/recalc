@@ -81,10 +81,7 @@ typedef struct TokenReader TokenReader;
 
 */
 // initialize the TokenReader class to read from Standard Input
-extern TokenReader *TokenReader_create();
-
-// Force the next getNextToken to read in a line of input
-extern void TokenReader_clear_to_eoln(TokenReader *tr);
+extern TokenReader *TokenReader_create(char *line);
 
 // Return the next Token from the input line
 extern Token *TokenReader_get_next_token(TokenReader *tr);

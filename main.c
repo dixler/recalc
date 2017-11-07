@@ -10,6 +10,8 @@
 #define DEBUGMODE if(debugMode)
 #include <ncurses.h>
 #include <math.h>
+#include <string.h>
+#include <ctype.h>
 #include "stack.h"
 #include "tokens.h"
 #include "cursor.h"
@@ -25,6 +27,54 @@
 #define END 70
 
 int debugMode = 0;
+
+void drawString(char *string) {
+   int len = strlen(string);
+   stack *expo_stack = stk_create(free);
+   {
+      int *node = (int*)malloc(sizeof(int));
+      *node = 0;
+      stk_push(expo_stack,(void*)node);
+   }
+   int x = 0, y = 8;
+   int offset_y = 0;
+   for(int index = 0; index < len; index++){
+      // print the character
+      if(isdigit(string[index]))
+         mvprintw(y-offset_y, x++, "%c", string[index]);
+      else{
+         if(string[index] == '^'){
+            mvprintw(y-offset_y, x++, "%c", string[index]);
+            // we have an exponent so increase height
+            *(int*)stk_top(expo_stack) += 1;
+            --x;
+            offset_y += 1;
+            continue;
+         }
+         else if(string[index] == '('){
+            // we have an expression so it may have its own stuff
+            int *node = (int*)malloc(sizeof(int));
+            *node = 0;
+            stk_push(expo_stack,(void*)node);
+         }
+         else if(string[index] == ')'){
+            // we finished the expression pop it off the stack
+            offset_y -= *(int*)stk_top(expo_stack);
+            stk_pop(expo_stack);
+         }
+         else{
+            // we don't have an exponent to increase height so just
+            // reset the height back to normal
+            offset_y -= *(int*)stk_top(expo_stack);
+            *(int*)stk_top(expo_stack) = 0;
+         }
+         mvprintw(y-offset_y, x++, "%c", string[index]);
+      }
+   }
+   
+   stk_free(expo_stack);
+   return;
+}
 
 void printCommands() {
    printf ("The commands for this program are:\n\n");
@@ -261,7 +311,9 @@ int main(int argc, char *argv[]) {
       inputToken = TokenReader_get_next_token(tr);
       solution = processExpression(inputToken, tr);
       clear();
+      // print string
       mvprintw(0,0, "%s", string);
+      drawString(string);
       if(solution != NULL){
          mvprintw(1,0, "%d", *solution);
       }

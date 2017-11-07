@@ -26,7 +26,7 @@ stack *stk_create(void *free_func){
    this->free_func = free_func;
    this->capacity = 2;
    this->size = 0;
-   this->stack = (void**)malloc(sizeof(void*)*2);
+   this->stack = (void**)malloc(sizeof(void*)*this->capacity);
    return this;
 }
 

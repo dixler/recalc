@@ -1,0 +1,11 @@
+This is a calculator project for my cs 211 course at UIC that was originally in C++, but I ported it to C.
+
+Patrick A. Troy authored the tokenization and provided an algorithm to calculate infix math, by tokenizing the values.
+
+I implemented that algorithm in C++, converted it to C(for some reason) and then used ncurses to allow for Non-Canonical mode as well as easy screen drawing.
+
+I had to implement a cursor to allow for navigation in the equation and then create an algorithm to determine the height of each exponential term.
+
+I'm trying to implement division, but it's actually a much trickier problem and I'm currently rewriting everything in python to make my life less difficult(and python handles math automagically).
+
+
